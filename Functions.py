@@ -10,7 +10,7 @@ def custom_distance(a, b):
     epsilon = 1e-10  # Small constant to avoid zero or negative values
     A=np.array(a)
     B=np.array(b)
-    return np.sum((A - B) * np.power(np.log(A + epsilon) - np.log(B + epsilon), 2))
+    return np.dot((A - B), np.log(A + epsilon) - np.log(B + epsilon))
 
 ### Making sure coodinates are positive for using log
 
