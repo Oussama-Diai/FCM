@@ -8,7 +8,9 @@ import math
 
 def custom_distance(a, b):
     epsilon = 1e-10  # Small constant to avoid zero or negative values
-    return np.sum((a - b) * np.power(np.log(a + epsilon) - np.log(b + epsilon), 2))
+    A=np.array(a)
+    B=np.array(b)
+    return np.sum((A - B) * np.power(np.log(A + epsilon) - np.log(B + epsilon), 2))
 
 ### Making sure coodinates are positive for using log
 
@@ -33,12 +35,13 @@ def initializeMembershipMatrix(nb_data_points, nb_clusters):
         summation = sum(random_num_list)
         temp_list = [x/summation for x in random_num_list]
         membership_mat.append(temp_list)
-    return membership_mat #list of lists, can be converted using np.array(membership_mat)
+    return np.array(membership_mat) #list of lists, can be converted using np.array(membership_mat)
 
 ### calculating the cluster center, is done in every iteration
 
-def calculateClusterCenter(df, membership_mat, nb_clusters, fuzziness):
-    cluster_mem_val = zip(*membership_mat)
+def calculateClusterCenter(df, membership_mat, nb_data_points, nb_clusters, fuzziness=2):
+    #cluster_mem_val = zip(*membership_mat)
+    cluster_mem_val = np.array(membership_mat).T
     cluster_centers = list()
     for j in range(nb_clusters):
         x = list(cluster_mem_val[j])
@@ -49,14 +52,17 @@ def calculateClusterCenter(df, membership_mat, nb_clusters, fuzziness):
             data_point = list(df.iloc[i])
             prod = [xraised[i] * val for val in data_point]
             temp_num.append(prod)
-        numerator = map(sum, zip(*temp_num))
-        center = [z/denominator for z in numerator]
-        cluster_centers.append(center)
+        #numerator = map(sum, zip(*temp_num))
+        #center = [z/denominator for z in numerator]
+        #cluster_centers.append(center)
+        numerator = np.sum(temp_num, axis=0)
+        center = numerator / denominator
+        cluster_centers.append(center.tolist())
     return cluster_centers
 
 ### updating the membership values using the cluster centers
 
-def updateMembershipValue(df, membership_mat, cluster_centers, nb_clusters):
+def updateMembershipValue(df, membership_mat, cluster_centers,nb_data_points, nb_clusters, fuzziness=2):
     p = float(2/(fuzziness-1))
     for i in range(nb_data_points):
         x = list(df.iloc[i])
@@ -77,13 +83,13 @@ def getClusters(membership_mat, cluster_centers, nb_clusters):
 
 ### the final fcm function, 
 
-def fuzzyCMeansClustering(df, nb_data_points, nb_clusters, MAX_ITER):
+def fuzzyCMeansClustering(df, nb_data_points, nb_clusters, MAX_ITER, tol=1e-4):
     # Membership Matrix
     membership_mat = initializeMembershipMatrix(nb_data_points, nb_clusters)
     curr = 0
     while curr <= MAX_ITER:
-        cluster_centers = calculateClusterCenter(df, membership_mat, nb_clusters, fuzziness)
-        new_membership_mat = updateMembershipValue(df, membership_mat, cluster_centers, nb_clusters)
+        cluster_centers = calculateClusterCenter(df, membership_mat, nb_data_points, nb_clusters, fuzziness=2)
+        new_membership_mat = updateMembershipValue(df, membership_mat, cluster_centers,nb_data_points, nb_clusters)
         cluster_labels = getClusters(new_membership_mat, cluster_centers, nb_clusters)
         curr += 1
 
